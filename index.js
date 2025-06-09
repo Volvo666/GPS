@@ -25,7 +25,7 @@ const sharedRoutesRouter = require('./routes/sharedRoutes');
 
 
 // Rutas públicas
-app.use('/api/user/register', userRouter);
+app.use('/api/user', userRouter);
 app.use('/api/user/login', userRouter);
 
 // Rutas de rutas compartidas (mixtas - algunas públicas, algunas privadas)
