@@ -19,7 +19,7 @@ app.use(bodyParser.urlencoded({ extended: true }));
 const auth = require('./auth');
 
 // Importar rutas
-const routesRouter = require('./Ruta');
+const routesRouter = require('./routes/Ruta');
 const userRouter = require('./Usuario');
 const sharedRoutesRouter = require('./SharedRoute');
 
