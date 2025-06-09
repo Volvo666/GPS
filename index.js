@@ -20,7 +20,8 @@ const auth = require('./auth');
 
 // Importar rutas
 const routesRouter = require('./routes/Ruta');
-const userRouter = require('./routes/user');
+const userRouter = require('./routes/userRoutes');
+
 const sharedRoutesRouter = require('./routes/sharedRoutes');
 
 
