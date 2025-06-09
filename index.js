@@ -21,7 +21,7 @@ const auth = require('./auth');
 // Importar rutas
 const routesRouter = require('./routes/Ruta');
 const userRouter = require('./routes/user');
-const sharedRoutesRouter = require('./SharedRoute');
+const sharedRoutesRouter = require('./routes/SharedRoute');
 
 
 // Rutas públicas
