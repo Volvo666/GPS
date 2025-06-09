@@ -16,7 +16,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
 
 // Importar middleware de autenticación
-const auth = require('./middleware/auth');
+const auth = require('./auth');
 
 // Importar rutas
 const routesRouter = require('./routes/routes');
