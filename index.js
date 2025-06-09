@@ -61,4 +61,8 @@ app.listen(PORT, () => {
 });
 
 module.exports = app;
+app.get('/', (req, res) => {
+  res.send('🚛 Backend Truking GPS activo y funcionando');
+});
+module.exports = app;
 
