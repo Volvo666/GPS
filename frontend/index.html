@@ -1,0 +1,72 @@
+<!DOCTYPE html><html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ubicación GPS</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <style>
+        body { font-family: sans-serif; margin: 0; padding: 1rem; }
+        #map { height: 400px; width: 100%; margin-bottom: 1rem; }
+        button { padding: 0.5rem 1rem; font-size: 1rem; border: none; border-radius: 0.5rem; cursor: pointer; }
+    </style>
+</head>
+<body>
+    <h1 class="text-xl font-bold mb-2">Ubicación GPS</h1>
+    <div id="map"></div>
+    <button id="locateBtn">Obtener ubicación</button><script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+<script>
+    // Inicializar el mapa centrado en una ubicación genérica
+    const map = L.map('map').setView([40.4168, -3.7038], 6);
+    L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+        attribution: '&copy; OpenStreetMap contributors'
+    }).addTo(map);
+
+    let userMarker;
+    const locateBtn = document.getElementById('locateBtn');
+    locateBtn.addEventListener('click', getLocation);
+
+    function getLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(showPosition, showError);
+        } else {
+            alert('La geolocalización no es soportada por este navegador.');
+        }
+    }
+
+    function showPosition(position) {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+
+        if (userMarker) {
+            userMarker.setLatLng([lat, lon]);
+        } else {
+            userMarker = L.marker([lat, lon]).addTo(map);
+        }
+        map.setView([lat, lon], 13);
+
+        // Enviar la ubicación al backend
+        fetch('https://truking-gps-backend.onrender.com/api/location', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ latitude: lat, longitude: lon })
+        })
+        .then(res => res.json())
+        .then(data => console.log('Guardado:', data))
+        .catch(err => console.error('Error al enviar la ubicación:', err));
+    }
+
+    function showError(error) {
+        const messages = {
+            1: 'Usuario denegó la solicitud de geolocalización.',
+            2: 'La ubicación no está disponible.',
+            3: 'La solicitud ha caducado.',
+            0: 'Se produjo un error desconocido.'
+        };
+        alert(messages[error.code] || 'Error de geolocalización');
+    }
+</script>
+
+</body>
+</html>
