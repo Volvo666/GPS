@@ -8,7 +8,6 @@ const sharedRouteSchema = new mongoose.Schema({
   shareId: {
     type: String,
     required: true,
-    unique: true,
   },
   
   // Usuario que comparte la ruta
