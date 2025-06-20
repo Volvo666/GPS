@@ -148,7 +148,6 @@ const sharedRouteSchema = new mongoose.Schema({
 });
 
 // Indices para optimizar consultas
-sharedRouteSchema.index({ shareId: 1, user: 1 });
 sharedRouteSchema.index({ status: 1 });
 sharedRouteSchema.index({ shareId: 1, expiresAt: 1 }, { expireAfterSeconds: 0 });
 sharedRouteSchema.index({ 'currentLocation.timestamp': -1 });
