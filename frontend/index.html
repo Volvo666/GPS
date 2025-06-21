@@ -58,7 +58,7 @@ app.get('/', (req, res) => {
         map.setView([lat, lon], 13);
 
         // Enviar la ubicación al backend
-        fetch('https://truking-gps-backend.onrender.com/api/location', {
+        fetch('/api/location', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
