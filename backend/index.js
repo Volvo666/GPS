@@ -3,6 +3,7 @@ const cors = require('cors');
 const bodyParser = require('body-parser');
 const dotenv = require('dotenv');
 const path = require('path');
+const fs = require('fs');
 
 // Cargar variables de entorno
 dotenv.config();
@@ -20,13 +21,22 @@ app.use(cors({
 app.use(bodyParser.json({ limit: '10mb' }));
 app.use(bodyParser.urlencoded({ extended: true, limit: '10mb' }));
 
-// Servir archivos estáticos desde la carpeta frontend
-app.use(express.static(path.join(__dirname, '../frontend')));
-
 // Log de inicio
 console.log('🚀 Iniciando aplicación Truking GPS...');
 console.log('📦 NODE_ENV:', process.env.NODE_ENV);
 console.log('🔌 PORT:', process.env.PORT);
+
+// Verificar si existe el frontend
+const frontendPath = path.join(__dirname, '../frontend');
+let frontendExists = false;
+try {
+  require('fs').accessSync(frontendPath);
+  frontendExists = true;
+  app.use(express.static(frontendPath));
+  console.log('✅ Frontend encontrado y configurado');
+} catch (error) {
+  console.log('⚠️  Frontend no encontrado, solo API mode');
+}
 
 // Importar y configurar rutas de forma segura
 let routesLoaded = {
@@ -90,13 +100,31 @@ for (const routeFile of possibleRouteFiles) {
 
 // Rutas básicas
 app.get('/', (req, res) => {
-  try {
-    res.sendFile(path.join(__dirname, '../frontend', 'index.html'));
-  } catch (error) {
+  if (frontendExists) {
+    try {
+      res.sendFile(path.join(__dirname, '../frontend', 'index.html'));
+    } catch (error) {
+      res.json({
+        message: 'Truking GPS API',
+        status: 'running - API only mode',
+        timestamp: new Date().toISOString(),
+        endpoints: {
+          status: '/api/status',
+          user: '/api/user',
+          sharedRoutes: '/api/shared-routes'
+        }
+      });
+    }
+  } else {
     res.json({
       message: 'Truking GPS API',
-      status: 'running',
-      timestamp: new Date().toISOString()
+      status: 'running - API only mode',
+      timestamp: new Date().toISOString(),
+      endpoints: {
+        status: '/api/status',
+        user: '/api/user', 
+        sharedRoutes: '/api/shared-routes'
+      }
     });
   }
 });
@@ -116,10 +144,17 @@ app.get('/api/status', (req, res) => {
 
 // Ruta catch-all para SPA
 app.get('*', (req, res) => {
-  try {
-    res.sendFile(path.join(__dirname, '../frontend', 'index.html'));
-  } catch (error) {
-    res.status(404).json({ message: 'Page not found' });
+  if (frontendExists) {
+    try {
+      res.sendFile(path.join(__dirname, '../frontend', 'index.html'));
+    } catch (error) {
+      res.status(404).json({ message: 'Page not found' });
+    }
+  } else {
+    res.status(404).json({ 
+      message: 'API endpoint not found',
+      availableEndpoints: ['/api/status', '/api/user', '/api/shared-routes']
+    });
   }
 });
 
@@ -177,4 +212,3 @@ startServer().catch((error) => {
 });
 
 module.exports = app;
-
