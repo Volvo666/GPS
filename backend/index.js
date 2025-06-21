@@ -1,8 +1,9 @@
-// Importa el router nuevoconst express = require('express')
+const express = require('express'); 
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const dotenv = require('dotenv');
 const connectDB = require('./db');
+const sharedRoutesRouter = require('./routes/sharedRoutes');
 
 // Cargar variables de entorno
 dotenv.config();
@@ -14,6 +15,7 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
+app.use('/api/shared-routes', sharedRoutesRouter);
 
 // Importar middleware de autenticación
 const auth = require('./auth');
