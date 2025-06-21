@@ -1,4 +1,8 @@
-const express = require('express'); 
+app.use(express.static(path.join(__dirname, 'frontend')));
+
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'frontend', 'index.html'));
+});const express = require('express'); 
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const dotenv = require('dotenv');
