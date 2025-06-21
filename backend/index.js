@@ -24,9 +24,6 @@ const auth = require('./auth');
 const routesRouter = require('./routes/Ruta');
 const userRouter = require('./routes/userRoutes');
 
-const sharedRoutesRouter = require('./routes/sharedRoutes');
-
-
 // Rutas públicas
 app.use('/api/user', userRouter);
 app.use('/api/user/login', userRouter);
