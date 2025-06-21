@@ -66,7 +66,6 @@ const sharedRouteSchema = new mongoose.Schema({
 
 // ---- Índices optimizados ----
 sharedRouteSchema.index({ shareId: 1 }); // Búsqueda rápida
-sharedRouteSchema.index({ userId: 1 });
 sharedRouteSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 }); // TTL
 
 // ---- Métodos para compartir ----
