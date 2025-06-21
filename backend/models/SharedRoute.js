@@ -1,5 +1,8 @@
 const mongoose = require('mongoose');
 
+// Configurar baseUrl desde variables de entorno
+const baseUrl = process.env.BASE_URL || 'https://tu-app.railway.app/shared-routes';
+
 /**
  * Modelo para compartir rutas por Email, SMS y WhatsApp
  */
@@ -8,20 +11,18 @@ const sharedRouteSchema = new mongoose.Schema({
   shareId: {
     type: String,
     required: true,
-    unique: true,
+    unique: true, // Esto ya crea el índice automáticamente
     default: function() {
       const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
       return Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
     }
   },
-
   // Usuario que comparte
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
   },
-
   // Datos de la ruta
   routeInfo: {
     origin: { name: String, coordinates: { lat: Number, lng: Number } },
@@ -29,14 +30,12 @@ const sharedRouteSchema = new mongoose.Schema({
     estimatedDuration: Number, // minutos
     estimatedDistance: Number // km
   },
-
   // Ubicación actual
   currentLocation: {
     coordinates: { lat: Number, lng: Number },
     timestamp: { type: Date, default: Date.now },
     speed: { type: Number, default: 0 } // km/h
   },
-
   // Configuración de privacidad y métodos de compartir
   privacy: {
     sharingMethods: {
@@ -53,25 +52,25 @@ const sharedRouteSchema = new mongoose.Schema({
     }],
     publicAccess: { type: Boolean, default: false }
   },
-
-  // Metadatos
-  createdAt: { type: Date, default: Date.now },
+  // Expiración
   expiresAt: { 
     type: Date, 
     default: () => new Date(Date.now() + 24 * 60 * 60 * 1000) // 24h
   }
 }, {
-  timestamps: true
+  timestamps: true // Esto crea automáticamente createdAt y updatedAt
 });
 
 // ---- Índices optimizados ----
-sharedRouteSchema.index({ shareId: 1 }); // Búsqueda rápida
-sharedRouteSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 }); // TTL
+// NO agregues índice para shareId porque unique: true ya lo crea
+// sharedRouteSchema.index({ shareId: 1 }); // <-- ELIMINAR ESTA LÍNEA
+
+// Solo mantener el índice TTL
+sharedRouteSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 });
 
 // ---- Métodos para compartir ----
 // Generar enlace de compartir según método
-sharedRouteSchema.methods.generateShareLink = function(method = 'whatsapp') 
-{
+sharedRouteSchema.methods.generateShareLink = function(method = 'whatsapp') {
   const link = `${baseUrl}/${this.shareId}`;
   
   switch(method) {
@@ -93,4 +92,3 @@ sharedRouteSchema.methods.canView = function(viewerContact) {
 };
 
 module.exports = mongoose.model('SharedRoute', sharedRouteSchema);
-
