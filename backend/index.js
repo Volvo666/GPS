@@ -1,11 +1,8 @@
-app.use(express.static(path.join(__dirname, 'frontend')));
-
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'frontend', 'index.html'));
-});const express = require('express'); 
+const express = require('express'); 
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const dotenv = require('dotenv');
+const path = require('path'); // Agregado para servir archivos estáticos
 const connectDB = require('./db');
 const sharedRoutesRouter = require('./routes/sharedRoutes');
 
@@ -19,7 +16,9 @@ const app = express();
 app.use(cors());
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: true }));
-app.use('/api/shared-routes', sharedRoutesRouter);
+
+// Servir archivos estáticos desde la carpeta frontend
+app.use(express.static(path.join(__dirname, '../frontend')));
 
 // Importar middleware de autenticación
 const auth = require('./auth');
@@ -39,13 +38,18 @@ app.use('/api/shared-routes', sharedRoutesRouter);
 app.use('/api/routes', auth, routesRouter);
 app.use('/api/user', auth, userRouter);
 
-// Ruta de prueba
+// Ruta principal - servir el frontend
 app.get('/', (req, res) => {
-  res.send('API de Truking GPS funcionando correctamente');
+  res.sendFile(path.join(__dirname, '../frontend', 'index.html'));
+});
+
+// Ruta de prueba para verificar que la API funciona
+app.get('/api/status', (req, res) => {
+  res.json({ message: 'API de Truking GPS funcionando correctamente' });
 });
 
 // Puerto
-const PORT = process.env.PORT || 5000;
+const PORT = process.env.PORT || 3000;
 
 // Conexión a MongoDB (comentada hasta tener credenciales)
 /*
@@ -65,9 +69,5 @@ app.listen(PORT, () => {
   console.log(`Servidor ejecutándose en el puerto ${PORT}`);
 });
 
-module.exports = app;
-app.get('/', (req, res) => {
-  res.send('🚛 Backend Truking GPS activo y funcionando');
-});
 module.exports = app;
 
