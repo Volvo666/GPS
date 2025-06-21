@@ -1,3 +1,16 @@
+const express = require('express');
+const path = require('path');
+const app = express();
+
+// Servir archivos estáticos desde la carpeta frontend
+app.use(express.static(path.join(__dirname, 'frontend')));
+
+// Ruta principal que sirve el index.html
+app.get('/', (req, res) => {
+    res.sendFile(path.join(__dirname, 'frontend', 'index.html'));
+});
+
+// Resto de tu código...
 <!DOCTYPE html><html lang="es">
 <head>
     <meta charset="UTF-8">
