@@ -1,4 +1,4 @@
-const express = require('express');
+// Importa el router nuevoconst express = require('express')
 const cors = require('cors');
 const bodyParser = require('body-parser');
 const dotenv = require('dotenv');
