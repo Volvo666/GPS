@@ -71,8 +71,8 @@ sharedRouteSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 }); // TTL
 
 // ---- Métodos para compartir ----
 // Generar enlace de compartir según método
-sharedRouteSchema.methods.generateShareLink = function(method = 'whatsapp') {
-  const baseUrl = 'https://truking-gps.com/share'; // Cambia por tu URL real
+sharedRouteSchema.methods.generateShareLink = function(method = 'whatsapp') 
+{
   const link = `${baseUrl}/${this.shareId}`;
   
   switch(method) {
