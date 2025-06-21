@@ -1,234 +1,97 @@
 const mongoose = require('mongoose');
 
 /**
- * Modelo para rutas compartidas en tiempo real
+ * Modelo para compartir rutas por Email, SMS y WhatsApp
  */
 const sharedRouteSchema = new mongoose.Schema({
-  // ID único para compartir (público)
+  // ID único para compartir
   shareId: {
     type: String,
     required: true,
+    unique: true,
+    default: function() {
+      const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
+      return Array.from({ length: 8 }, () => chars[Math.floor(Math.random() * chars.length)]).join('');
+    }
   },
-  
-  // Usuario que comparte la ruta
+
+  // Usuario que comparte
   userId: {
     type: mongoose.Schema.Types.ObjectId,
     ref: 'User',
     required: true
   },
-  
-  // Información de la ruta
+
+  // Datos de la ruta
   routeInfo: {
-    origin: {
-      name: String,
-      coordinates: {
-        lat: Number,
-        lng: Number
-      }
-    },
-    destination: {
-      name: String,
-      coordinates: {
-        lat: Number,
-        lng: Number
-      }
-    },
-    estimatedDuration: Number, // en minutos
-    estimatedDistance: Number, // en kilómetros
-    startTime: Date,
-    estimatedArrival: Date
+    origin: { name: String, coordinates: { lat: Number, lng: Number } },
+    destination: { name: String, coordinates: { lat: Number, lng: Number } },
+    estimatedDuration: Number, // minutos
+    estimatedDistance: Number // km
   },
-  
-  // Ubicación actual del conductor
+
+  // Ubicación actual
   currentLocation: {
-    coordinates: {
-      lat: Number,
-      lng: Number
-    },
-    timestamp: {
-      type: Date,
-      default: Date.now
-    },
-    speed: Number, // km/h
-    heading: Number // grados
+    coordinates: { lat: Number, lng: Number },
+    timestamp: { type: Date, default: Date.now },
+    speed: { type: Number, default: 0 } // km/h
   },
-  
-  // Estado de la ruta
-  status: {
-    type: String,
-    enum: ['active', 'paused', 'completed', 'cancelled'],
-    default: 'active'
-  },
-  
-  // Configuración de privacidad
+
+  // Configuración de privacidad y métodos de compartir
   privacy: {
-    showExactLocation: {
-      type: Boolean,
-      default: true
-    },
-    showSpeed: {
-      type: Boolean,
-      default: false
-    },
-    showETA: {
-      type: Boolean,
-      default: true
+    sharingMethods: {
+      email: { type: Boolean, default: true },
+      sms: { type: Boolean, default: true },
+      whatsapp: { type: Boolean, default: true }
     },
     allowedViewers: [{
       email: String,
+      phone: String, // Para SMS/WhatsApp
       name: String,
-      addedAt: {
-        type: Date,
-        default: Date.now
-      }
+      method: { type: String, enum: ['email', 'sms', 'whatsapp'], required: true },
+      addedAt: { type: Date, default: Date.now }
     }],
-    publicAccess: {
-      type: Boolean,
-      default: false
-    }
+    publicAccess: { type: Boolean, default: false }
   },
-  
-  // Información del vehículo (opcional)
-  vehicleInfo: {
-    licensePlate: String,
-    model: String,
-    company: String
-  },
-  
-  // Configuración de actualizaciones
-  updateSettings: {
-    frequency: {
-      type: Number,
-      default: 30 // segundos
-    },
-    lastUpdate: {
-      type: Date,
-      default: Date.now
-    }
-  },
-  
-  // Historial de ubicaciones (últimas 50 para mostrar trayectoria)
-  locationHistory: [{
-    coordinates: {
-      lat: Number,
-      lng: Number
-    },
-    timestamp: Date,
-    speed: Number
-  }],
-  
+
   // Metadatos
-  createdAt: {
-    type: Date,
-    default: Date.now
-  },
-  
-  expiresAt: {
-    type: Date,
-    default: function() {
-      // Por defecto expira en 24 horas
-      return new Date(Date.now() + 24 * 60 * 60 * 1000);
-    }
-  },
-  
-  // Estadísticas
-  stats: {
-    totalViews: {
-      type: Number,
-      default: 0
-    },
-    uniqueViewers: {
-      type: Number,
-      default: 0
-    },
-    lastViewed: Date
+  createdAt: { type: Date, default: Date.now },
+  expiresAt: { 
+    type: Date, 
+    default: () => new Date(Date.now() + 24 * 60 * 60 * 1000) // 24h
   }
 }, {
   timestamps: true
 });
 
-// Indices para optimizar consultas
-sharedRouteSchema.index({ status: 1 });
-sharedRouteSchema.index({ shareId: 1, expiresAt: 1 }, { expireAfterSeconds: 0 });
-sharedRouteSchema.index({ 'currentLocation.timestamp': -1 });
+// ---- Índices optimizados ----
+sharedRouteSchema.index({ shareId: 1 }); // Búsqueda rápida
+sharedRouteSchema.index({ userId: 1 });
+sharedRouteSchema.index({ expiresAt: 1 }, { expireAfterSeconds: 0 }); // TTL
 
-
-// Método para generar un shareId único
-sharedRouteSchema.statics.generateShareId = function() {
-  const characters = 'ABCDEFGHJKMNPQRSTUVWXYZabcdefghijkmnpqrstuvwxyz23456789';
-  let result = '';
-  for (let i = 0; i < 8; i++) {
-    result += characters.charAt(Math.floor(Math.random() * characters.length));
+// ---- Métodos para compartir ----
+// Generar enlace de compartir según método
+sharedRouteSchema.methods.generateShareLink = function(method = 'whatsapp') {
+  const baseUrl = 'https://truking-gps.com/share'; // Cambia por tu URL real
+  const link = `${baseUrl}/${this.shareId}`;
+  
+  switch(method) {
+    case 'sms':
+      return `SMSTRK: Accede a la ruta: ${link}`;
+    case 'whatsapp':
+      return `WhatsApp: 🌍 Ruta compartida: ${link}`;
+    default:
+      return `Email: Enlace a la ruta: ${link}`;
   }
-  return result;
 };
 
-// Método para actualizar ubicación
-sharedRouteSchema.methods.updateLocation = function(locationData) {
-  // Actualizar ubicación actual
-  this.currentLocation = {
-    coordinates: locationData.coordinates,
-    timestamp: new Date(),
-    speed: locationData.speed || 0,
-    heading: locationData.heading || 0
-  };
-  
-  // Añadir al historial (mantener solo las últimas 50)
-  this.locationHistory.push({
-    coordinates: locationData.coordinates,
-    timestamp: new Date(),
-    speed: locationData.speed || 0
-  });
-  
-  if (this.locationHistory.length > 50) {
-    this.locationHistory = this.locationHistory.slice(-50);
-  }
-  
-  // Actualizar timestamp de última actualización
-  this.updateSettings.lastUpdate = new Date();
-  
-  return this.save();
-};
-
-// Método para verificar si un usuario puede ver la ruta
-sharedRouteSchema.methods.canView = function(viewerEmail = null) {
-  // Si es acceso público
-  if (this.privacy.publicAccess) {
-    return true;
-  }
-  
-  // Si no hay email, no puede ver rutas privadas
-  if (!viewerEmail) {
-    return false;
-  }
-  
-  // Verificar si está en la lista de viewers permitidos
-  return this.privacy.allowedViewers.some(viewer => 
-    viewer.email.toLowerCase() === viewerEmail.toLowerCase()
+// Verificar permisos de visualización
+sharedRouteSchema.methods.canView = function(viewerContact) {
+  if (this.privacy.publicAccess) return true;
+  return this.privacy.allowedViewers.some(v => 
+    v.email === viewerContact || v.phone === viewerContact
   );
 };
-
-// Método para incrementar estadísticas de visualización
-sharedRouteSchema.methods.incrementViews = function(viewerEmail = null) {
-  this.stats.totalViews += 1;
-  this.stats.lastViewed = new Date();
-  
-  // Si es un viewer único (aproximado)
-  if (viewerEmail) {
-    this.stats.uniqueViewers += 1;
-  }
-  
-  return this.save();
-};
-
-// Middleware para limpiar rutas expiradas
-sharedRouteSchema.pre('find', function() {
-  this.where({ expiresAt: { $gt: new Date() } });
-});
-
-sharedRouteSchema.pre('findOne', function() {
-  this.where({ expiresAt: { $gt: new Date() } });
-});
 
 module.exports = mongoose.model('SharedRoute', sharedRouteSchema);
 
